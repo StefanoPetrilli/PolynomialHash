@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PolynomialHash.Tests/PolynomialHash.Tests.csproj" />
+  <Project Path="PolynomialHash/PolynomialHash.csproj" />
+</Solution>
