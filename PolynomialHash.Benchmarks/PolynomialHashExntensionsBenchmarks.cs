@@ -12,14 +12,13 @@ public class PolynomialHashBenchmarks
 	[GlobalSetup]
 	public void Setup()
 	{
-		var random = new Random(42);
-		_largeArray = [.. Enumerable.Range(0, N).Select(_ => random.Next(1, 1000))];
+		_largeArray = [.. Enumerable.Range(0, N)];
 		_largeList = [.. _largeArray];
 	}
 
 	[Benchmark(Baseline = true)]
-	public long Int64Hash_Array() => _largeArray.ToInt64PolynomialHash(v => v);
+	public ulong UInt64Hash_Array() => _largeArray.ToUInt64PolynomialHash(v => v);
 
 	[Benchmark]
-	public long Int64Hash_List() => _largeList.ToInt64PolynomialHash(v => v);
+	public ulong UInt64Hash_List() => _largeList.ToUInt64PolynomialHash(v => v);
 }
