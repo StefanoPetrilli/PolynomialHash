@@ -13,12 +13,17 @@ public static class PolynomialHashExtensions
 		ArgumentNullException.ThrowIfNull(source);
 		ArgumentNullException.ThrowIfNull(valueSelector);
 
-		long hashValue = 0;
-		long primePower = 1;
+		long hashValue = 0, primePower = 1, itemValue;
 
 		foreach (T item in source)
 		{
-			hashValue = (hashValue + valueSelector(item) * primePower) % mod;
+			itemValue = valueSelector(item) % mod;
+			if (itemValue < 0)
+			{
+				itemValue += mod;
+			}
+
+			hashValue = (hashValue + (itemValue * primePower)) % mod;
 			primePower = primePower * prime % mod;
 		}
 
