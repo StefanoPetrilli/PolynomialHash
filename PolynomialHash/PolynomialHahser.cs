@@ -6,7 +6,9 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 	private readonly ulong _prime;
 	private readonly ulong _mod;
 
-	public PolynomialHasher(Func<T, long> valueSelector, ulong prime = HashConstants.DefaultPrime, ulong mod = HashConstants.DefaultMod)
+	public PolynomialHasher(Func<T, long> valueSelector,
+		ulong prime = HashConstants.DefaultPrime,
+		ulong mod = HashConstants.DefaultMod)
 	{
 		ArgumentNullException.ThrowIfNull(valueSelector);
 		_valueSelector = valueSelector;
