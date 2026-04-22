@@ -21,4 +21,10 @@ public class PolynomialHashBenchmarks
 
 	[Benchmark]
 	public ulong UInt64Hash_List() => _largeList.ToUInt64PolynomialHash(v => v);
+
+	[Benchmark]
+	public ulong UInt64Hash_Array_PowerOfTwo() => _largeArray.ToUInt64PolynomialHash(v => v, mod: 4294967296);
+
+	[Benchmark]
+	public ulong UInt64Hash_Array_FullRange() => _largeArray.ToUInt64PolynomialHash(v => v, mod: 0);
 }
