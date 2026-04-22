@@ -3,7 +3,8 @@ namespace PolynomialHash.Tests;
 public class PolynomialHashEqualityComparerTests
 {
 	private readonly PolynomialHasher<int> _comparer = new(x => x);
-	private static readonly int[] item = new[] { 1, 2, 3 };
+	private static readonly int[] firstTestArray = [1, 2, 3];
+	private static readonly int[] secondTestArray = [3, 2, 1];
 
 	[Fact]
 	public void Equals_SameReference_ReturnsTrue()
@@ -91,9 +92,9 @@ public class PolynomialHashEqualityComparerTests
 	public void HashSet_DuplicateSequence_IsNotAdded()
 	{
 		var set = new HashSet<IEnumerable<int>>(_comparer)
-		{ item,
-			new[] { 4, 5, 6 },
-			item
+		{ firstTestArray,
+			secondTestArray,
+			firstTestArray
 		};
 
 		Assert.Equal(2, set.Count);
@@ -102,7 +103,7 @@ public class PolynomialHashEqualityComparerTests
 	[Fact]
 	public void HashSet_Contains_FindsSequenceByValue()
 	{
-		var set = new HashSet<IEnumerable<int>>(_comparer) { new[] { 1, 2, 3 } };
+		var set = new HashSet<IEnumerable<int>>(_comparer) { firstTestArray };
 		Assert.Contains([1, 2, 3], set);
 	}
 
@@ -111,8 +112,8 @@ public class PolynomialHashEqualityComparerTests
 	{
 		var set = new HashSet<IEnumerable<int>>(_comparer)
 		{
-			new[] { 1, 2, 3 },
-			new[] { 3, 2, 1 }
+			firstTestArray,
+			secondTestArray
 		};
 
 		Assert.Equal(2, set.Count);
