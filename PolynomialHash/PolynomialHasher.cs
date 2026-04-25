@@ -1,4 +1,6 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace PolynomialHash;
 
@@ -21,7 +23,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 	}
 
 	public ulong ComputeHash(ReadOnlySpan<T> source)
-		=> _isModPowerOfTwo ? ComputeHashWithBitwiseMask(source) : ComputeHashWithModulo(source);
+		=> _isModPowerOfTwo ? SelectComputeHashWithBitwiseMask(source) : ComputeHashWithModulo(source);
 
 	public ulong ComputeHash(IEnumerable<T> source)
 	{
@@ -92,6 +94,23 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		}
 
 		return hashValue;
+	}
+
+	private ulong SelectComputeHashWithBitwiseMask(ReadOnlySpan<T> source) => true switch
+	{
+		_ when Vector512.IsHardwareAccelerated && Avx512F.IsSupported => ComputeHashWithBitwiseMaskAVX512(source),
+		_ when Vector256.IsHardwareAccelerated && Avx2.IsSupported => ComputeHashWithBitwiseMaskAVX2(source),
+		_ => ComputeHashWithBitwiseMask(source)
+	};
+
+	private ulong ComputeHashWithBitwiseMaskAVX512(ReadOnlySpan<T> source)
+	{
+		return 0;
+	}
+
+	private ulong ComputeHashWithBitwiseMaskAVX2(ReadOnlySpan<T> source)
+	{
+		return 0;
 	}
 
 	private ulong ComputeHashWithBitwiseMask(ReadOnlySpan<T> source)
