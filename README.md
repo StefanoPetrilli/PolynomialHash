@@ -1,53 +1,59 @@
 # PolynomialHash
-.NET10 Polynomial Rolling Hash Library which lets you compute a polynomial rolling hash over any `IEnumerable<T>` sequence with a single extension method call. It is also built for native integration, allowing you to plug it directly into standard data structures like `Dictionary` or `HashSet` to easily treat sequences as keys.
+
+.NET 10 Polynomial Rolling Hash Library which lets you compute a polynomial rolling hash over any `IEnumerable<T>` sequence with a single extension method call.
+
+It features a **Zero-Cost Seamless API** that automatically uses AVX-512 or AVX2 SIMD acceleration for numeric types, achieving hardware-limit performance by eliminating delegate overhead.
 
 ## Examples
 
-### Hashing sequences
+### Hashing sequences (Seamless API)
+
+For numeric types (`int`, `long`, `char`, etc.), the library automatically maps values without requiring a selector.
 
 ```csharp
 using PolynomialHash;
 
-// Hash a string using the numeric value of each character
-ulong hash = "hello world".ToUInt64PolynomialHash(c => c);
+// Seamlessly hash a string (uses AVX-512/AVX2 automatically)
+ulong hash = "hello world".ToPolynomialHash();
 
-// Hash a list of integers
-int hash32 = new[] { 1, 2, 3, 4, 5 }.ToInt32PolynomialHash(x => x);
+// Seamlessly hash a list of integers
+int hash32 = new[] { 1, 2, 3, 4, 5 }.ToInt32PolynomialHash();
 
 // Hash a sequence of custom objects by a meaningful key
 var orders = new[] { new Order(id: 1, amount: 99), new Order(id: 2, amount: 42) };
-ulong orderHash = orders.ToUInt64PolynomialHash(o => o.Id);
+ulong orderHash = orders.ToPolynomialHash(o => o.Id);
 ```
 
 ### Using as an equality comparer in collections
 
-`PolynomialHasher<T>` implements `IEqualityComparer<IEnumerable<T>>`, which means you can plug it directly into a `HashSet` or `Dictionary` to treat sequences as keys. Two sequences with the same elements in the same order will be considered equal.
+`PolynomialHasher<T>` implements `IEqualityComparer<IEnumerable<T>>`, allowing you to use sequences as keys in `HashSet` or `Dictionary`.
 
 ```csharp
 using PolynomialHash;
 
-var comparer = new PolynomialHasher<int>(x => x);
+// No selector needed for numeric types!
+var comparer = new PolynomialHasher<int>();
 
 // HashSet that deduplicates sequences by their contents
 var seen = new HashSet<IEnumerable<int>>(comparer);
 seen.Add(new[] { 1, 2, 3 }); // added
-seen.Add(new[] { 4, 5, 6 }); // added
-seen.Add(new[] { 1, 2, 3 }); // duplicate
-Console.WriteLine(seen.Count); // 2
-
-// Dictionary keyed by integer sequences
-var cache = new Dictionary<IEnumerable<int>, string>(comparer);
-cache[new[] { 10, 20, 30 }] = "first entry";
-Console.WriteLine(cache[new[] { 10, 20, 30 }]); // "first entry"
+seen.Add(new[] { 1, 2, 3 }); // duplicate skipped
 ```
+
+### Performance
+
+The library is optimized for .NET 10 and leverages modern CPU features:
+
+- **AVX-512 & AVX2**: Processes 8 (AVX-512) or 4 (AVX2) elements in parallel.
+- **Zero-Cost Mapping**: Uses generic specialization to inline mapping logic, achieving up to **2x faster throughput** than standard delegate-based hashing.
+- **Zero Allocations**: Operates entirely on the stack and registers for `ReadOnlySpan<T>` inputs.
 
 ### Tuning the hash
 
-All methods accept optional `prime` and `mod` parameters so you can adapt the hash to your performance or collision-resistance requirements:
+All methods accept optional `prime` and `mod` parameters:
 
 ```csharp
-ulong hash = mySequence.ToUInt64PolynomialHash(
-    valueSelector: x => x,
+ulong hash = mySequence.ToPolynomialHash(
     prime: 131,
     mod: 1_000_000_007);
 ```

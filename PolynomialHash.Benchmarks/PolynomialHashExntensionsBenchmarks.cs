@@ -11,6 +11,7 @@ public class PolynomialHashBenchmarks
 	private PolynomialHasher<int> _moduloHasher = null!;
 	private PolynomialHasher<int> _bitMaskHasher = null!;
 	private PolynomialHasher<int> _zeroBitMaskHasher = null!;
+	private PolynomialHasher<int> _seamlessHasher = null!;
 	private const ulong StandardMod = 1_000_000_007;
 	private const ulong PowerOfTwoMod = 1u << 20;
 	private const ulong ZeroMod = 0;
@@ -26,9 +27,18 @@ public class PolynomialHashBenchmarks
 		_moduloHasher = new PolynomialHasher<int>(v => v, mod: StandardMod);
 		_bitMaskHasher = new PolynomialHasher<int>(v => v, mod: PowerOfTwoMod);
 		_zeroBitMaskHasher = new PolynomialHasher<int>(v => v, mod: ZeroMod);
+		_seamlessHasher = new PolynomialHasher<int>(null, mod: ZeroMod);
 	}
 
-	[Benchmark(Baseline = true)]
+	[Benchmark]
+	public ulong Span_Seamless_ZeroMod()
+		=> _seamlessHasher.ComputeHash(_largeArray.AsSpan());
+
+	[Benchmark]
+	public ulong Span_WithBitwiseMask_ZeroMod()
+		=> _zeroBitMaskHasher.ComputeHash(_largeArray.AsSpan());
+
+	[Benchmark]
 	public ulong IEnumerable_WithModulo()
 		=> _moduloHasher.ComputeHash(_largeEnumerable);
 
@@ -59,8 +69,4 @@ public class PolynomialHashBenchmarks
 	[Benchmark]
 	public ulong List_WithBitwiseMask_ZeroMod()
 		=> _zeroBitMaskHasher.ComputeHash(_largeList);
-
-	[Benchmark]
-	public ulong Span_WithBitwiseMask_ZeroMod()
-		=> _zeroBitMaskHasher.ComputeHash(_largeArray.AsSpan());
 }

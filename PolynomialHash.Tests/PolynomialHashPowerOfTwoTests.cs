@@ -1,5 +1,3 @@
-using System.Reflection.Metadata;
-
 namespace PolynomialHash.Tests;
 
 public class PolynomialHashPowerOfTwoTests

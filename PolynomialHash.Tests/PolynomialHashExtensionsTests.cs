@@ -71,10 +71,30 @@ public class PolynomialHashExtensionsTests()
 	}
 
 	[Fact]
-	public void NullSelector_ExpectsArgumentNullException()
+	public void NullSelector_ForNumericType_DoesNotThrow()
 	{
 		int[] source = [1, 2, 3];
-		_ = Assert.Throws<ArgumentNullException>(() => source.ToUInt64PolynomialHash(null!));
+		// Should not throw anymore because of seamless API
+		ulong hash = source.ToPolynomialHash(null!);
+		Assert.NotEqual((ulong)0, hash);
+	}
+
+	[Fact]
+	public void NullSelector_ForNonNumericType_ExpectsArgumentNullException()
+	{
+		// Using a complex type (object) which is not in the IsNumericType list
+		object[] source = [new(), new()];
+		_ = Assert.Throws<ArgumentNullException>(() => source.ToPolynomialHash(null!));
+	}
+
+	[Fact]
+	public void SeamlessNumericHash_ProducesCorrectResult()
+	{
+		int[] source = [1, 2, 3];
+		ulong hashWithSelector = source.ToPolynomialHash(v => v);
+		ulong hashSeamless = source.ToPolynomialHash();
+
+		Assert.Equal(hashWithSelector, hashSeamless);
 	}
 
 	[Fact]
@@ -99,5 +119,37 @@ public class PolynomialHashExtensionsTests()
 		uint intResult = source.ToUInt32PolynomialHash(v => v);
 
 		Assert.Equal((uint)longResult, intResult);
+	}
+
+	[Fact]
+	public void Double_IsDetectedAsNumericType()
+	{
+		double[] source = [1.1, 2.2, 3.3];
+		ulong hash = source.ToPolynomialHash();
+		Assert.NotEqual((ulong)0, hash);
+	}
+
+	[Fact]
+	public void Float_IsDetectedAsNumericType()
+	{
+		float[] source = [1.1f, 2.2f, 3.3f];
+		ulong hash = source.ToPolynomialHash();
+		Assert.NotEqual((ulong)0, hash);
+	}
+
+	[Fact]
+	public void Decimal_IsDetectedAsNumericType()
+	{
+		decimal[] source = [1.1m, 2.2m, 3.3m];
+		ulong hash = source.ToPolynomialHash();
+		Assert.NotEqual((ulong)0, hash);
+	}
+
+	[Fact]
+	public void Char_IsDetectedAsNumericType()
+	{
+		char[] source = ['a', 'b', 'c'];
+		ulong hash = source.ToPolynomialHash();
+		Assert.NotEqual((ulong)0, hash);
 	}
 }
