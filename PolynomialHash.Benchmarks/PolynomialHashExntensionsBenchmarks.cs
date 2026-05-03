@@ -59,4 +59,8 @@ public class PolynomialHashBenchmarks
 	[Benchmark]
 	public ulong List_WithBitwiseMask_ZeroMod()
 		=> _zeroBitMaskHasher.ComputeHash(_largeList);
+
+	[Benchmark]
+	public ulong Span_WithBitwiseMask_ZeroMod()
+		=> _zeroBitMaskHasher.ComputeHash(_largeArray.AsSpan());
 }
