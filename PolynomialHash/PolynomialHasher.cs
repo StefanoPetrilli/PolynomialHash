@@ -136,13 +136,13 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 	}
 
 	private ulong SelectComputeHashWithBitwiseMask<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-    where TMapper : struct, IValueMapper<T>
-    => (Vector512.IsHardwareAccelerated, Avx512F.IsSupported) switch
-    {
-        (true, true) => ComputeHashWithBitwiseMaskAVX512(source, mapper),
-        _ when Vector256.IsHardwareAccelerated && Avx2.IsSupported => ComputeHashWithBitwiseMaskAVX2(source, mapper),
-        _ => ComputeHashWithBitwiseMask(source, mapper)
-    };
+	where TMapper : struct, IValueMapper<T>
+	=> (Vector512.IsHardwareAccelerated, Avx512F.IsSupported) switch
+	{
+		(true, true) => ComputeHashWithBitwiseMaskAVX512(source, mapper),
+		_ when Vector256.IsHardwareAccelerated && Avx2.IsSupported => ComputeHashWithBitwiseMaskAVX2(source, mapper),
+		_ => ComputeHashWithBitwiseMask(source, mapper)
+	};
 
 	private ulong ComputeHashWithBitwiseMaskAVX512<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
 		where TMapper : struct, IValueMapper<T>
@@ -165,7 +165,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		int loopLimit = length - remainder;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
 
-		var (powersVec, jumpVec) = GetAVX512Constants();
+		(Vector512<ulong> powersVec, Vector512<ulong> jumpVec) = GetAVX512Constants();
 		Vector512<ulong> accVec = Vector512<ulong>.Zero;
 
 		ref T sourceRef = ref MemoryMarshal.GetReference(source);
@@ -190,7 +190,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		int loopLimit = length - remainder;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
 
-		var (powersVec, jumpVec) = GetAVX512Constants();
+		(Vector512<ulong> powersVec, Vector512<ulong> jumpVec) = GetAVX512Constants();
 		Vector512<ulong> accVec = Vector512<ulong>.Zero;
 
 		ref T sourceRef = ref MemoryMarshal.GetReference(source);
@@ -220,7 +220,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		int loopLimit = length - remainder;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
 
-		var (powersVec, jumpVec) = GetAVX512Constants();
+		(Vector512<ulong> powersVec, Vector512<ulong> jumpVec) = GetAVX512Constants();
 		Vector512<ulong> accVec = Vector512<ulong>.Zero;
 
 		ref T sourceRef = ref MemoryMarshal.GetReference(source);
@@ -304,7 +304,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		int loopLimit = length - remainder;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
 
-		var (powersVec, jumpVec) = GetAVX2Constants();
+		(Vector256<ulong> powersVec, Vector256<ulong> jumpVec) = GetAVX2Constants();
 		Vector256<ulong> accVec = Vector256<ulong>.Zero;
 
 		ref T sourceRef = ref MemoryMarshal.GetReference(source);
@@ -329,7 +329,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		int loopLimit = length - remainder;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
 
-		var (powersVec, jumpVec) = GetAVX2Constants();
+		(Vector256<ulong> powersVec, Vector256<ulong> jumpVec) = GetAVX2Constants();
 		Vector256<ulong> accVec = Vector256<ulong>.Zero;
 
 		ref T sourceRef = ref MemoryMarshal.GetReference(source);
@@ -359,7 +359,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		int loopLimit = length - remainder;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
 
-		var (powersVec, jumpVec) = GetAVX2Constants();
+		(Vector256<ulong> powersVec, Vector256<ulong> jumpVec) = GetAVX2Constants();
 		Vector256<ulong> accVec = Vector256<ulong>.Zero;
 
 		ref T sourceRef = ref MemoryMarshal.GetReference(source);

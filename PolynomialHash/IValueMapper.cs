@@ -5,7 +5,7 @@ namespace PolynomialHash;
 
 internal interface IValueMapper<in T>
 {
-	ulong Map(T value);
+	public ulong Map(T value);
 }
 
 internal readonly struct DelegateMapper<T>(Func<T, long> selector) : IValueMapper<T>
@@ -17,18 +17,17 @@ internal readonly struct DelegateMapper<T>(Func<T, long> selector) : IValueMappe
 internal readonly struct NumberMapper<T> : IValueMapper<T>
 {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ulong Map(T value)
-	{
-		if (typeof(T) == typeof(long)) return (ulong)(long)(object)value!;
-		if (typeof(T) == typeof(int)) return (ulong)(int)(object)value!;
-		if (typeof(T) == typeof(ulong)) return (ulong)(object)value!;
-		if (typeof(T) == typeof(uint)) return (ulong)(uint)(object)value!;
-		if (typeof(T) == typeof(short)) return (ulong)(short)(object)value!;
-		if (typeof(T) == typeof(ushort)) return (ulong)(ushort)(object)value!;
-		if (typeof(T) == typeof(byte)) return (ulong)(byte)(object)value!;
-		if (typeof(T) == typeof(sbyte)) return (ulong)(sbyte)(object)value!;
-		if (typeof(T) == typeof(char)) return (ulong)(char)(object)value!;
-
-		return (ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture);
-	}
+	public ulong Map(T value) => typeof(T) switch
+{
+    var t when t == typeof(long)   => (ulong)Unsafe.As<T, long>(ref value),
+    var t when t == typeof(ulong)  => Unsafe.As<T, ulong>(ref value),
+    var t when t == typeof(int)    => (ulong)Unsafe.As<T, int>(ref value),
+    var t when t == typeof(uint)   => Unsafe.As<T, uint>(ref value),
+    var t when t == typeof(short)  => (ulong)Unsafe.As<T, short>(ref value),
+    var t when t == typeof(ushort) => Unsafe.As<T, ushort>(ref value),
+    var t when t == typeof(byte)   => Unsafe.As<T, byte>(ref value),
+    var t when t == typeof(sbyte)  => (ulong)Unsafe.As<T, sbyte>(ref value),
+    var t when t == typeof(char)   => Unsafe.As<T, char>(ref value),
+    _ => (ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture)
+};
 }
