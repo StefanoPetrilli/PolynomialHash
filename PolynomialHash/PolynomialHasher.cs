@@ -13,8 +13,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 	private readonly bool _isModPowerOfTwo;
 
 	public PolynomialHasher(Func<T, long>? valueSelector = null,
-		ulong prime = HashConstants.DefaultPrime,
-		ulong mod = HashConstants.DefaultMod)
+	  ulong prime = HashConstants.DefaultPrime,
+	  ulong mod = HashConstants.DefaultMod)
 	{
 		if (valueSelector is null && !IsNumericType())
 		{
@@ -33,11 +33,6 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		_ => false
 	};
 
-	public ulong ComputeHash(ReadOnlySpan<T> source)
-	=> _valueSelector != null
-			? ComputeHashInternal(source, new DelegateMapper<T>(_valueSelector))
-			: ComputeHashInternal(source, new NumberMapper<T>());
-
 	public ulong ComputeHash(IEnumerable<T> source)
 	{
 		ArgumentNullException.ThrowIfNull(source);
@@ -50,22 +45,27 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		};
 	}
 
+	public ulong ComputeHash(ReadOnlySpan<T> source)
+	=> _valueSelector != null
+	  ? ComputeHashInternal(source, new DelegateMapper<T>(_valueSelector))
+	  : ComputeHashInternal(source, new NumberMapper<T>());
+
 	private ulong ComputeHashGeneric(IEnumerable<T> source)
-		=> _valueSelector != null
-			? ComputeHashWithDelegateMapper(source, _valueSelector)
-			: ComputeHashWithNumberMapper(source);
+	  => _valueSelector != null
+		? ComputeHashWithDelegateMapper(source, _valueSelector)
+		: ComputeHashWithNumberMapper(source);
 
 	private ulong ComputeHashWithDelegateMapper(IEnumerable<T> source, Func<T, long> selector)
-		=> ComputeHashWithMapper(source, new DelegateMapper<T>(selector));
+	  => ComputeHashWithMapper(source, new DelegateMapper<T>(selector));
 
 	private ulong ComputeHashWithNumberMapper(IEnumerable<T> source)
-		=> ComputeHashWithMapper(source, new NumberMapper<T>());
+	  => ComputeHashWithMapper(source, new NumberMapper<T>());
 
 	private ulong ComputeHashWithMapper<TMapper>(IEnumerable<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
-		=> _isModPowerOfTwo
-			? ComputeHashWithBitwiseMask(source, mapper)
-			: ComputeHashWithModulo(source, mapper);
+	  where TMapper : struct, IValueMapper<T>
+	  => _isModPowerOfTwo
+		? ComputeHashWithBitwiseMask(source, mapper)
+		: ComputeHashWithModulo(source, mapper);
 
 	public bool Equals(IEnumerable<T>? x, IEnumerable<T>? y) => (x, y) switch
 	{
@@ -75,16 +75,16 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 	};
 
 	public int GetHashCode(IEnumerable<T> obj)
-		=> unchecked((int)ComputeHash(obj));
+	  => unchecked((int)ComputeHash(obj));
 
 	private ulong ComputeHashInternal<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
-		=> _isModPowerOfTwo
-			? SelectComputeHashWithBitwiseMask(source, mapper)
-			: ComputeHashWithModulo(source, mapper);
+	  where TMapper : struct, IValueMapper<T>
+	  => _isModPowerOfTwo
+		? SelectComputeHashWithBitwiseMask(source, mapper)
+		: ComputeHashWithModulo(source, mapper);
 
 	private ulong ComputeHashWithModulo<TMapper>(IEnumerable<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
+	  where TMapper : struct, IValueMapper<T>
 	{
 		ulong hashValue = 0, primePower = 1;
 
@@ -99,8 +99,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return hashValue;
 	}
 
-	private ulong ComputeHashWithModulo<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
+	internal ulong ComputeHashWithModulo<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
+	  where TMapper : struct, IValueMapper<T>
 	{
 		ulong hashValue = 0, primePower = 1;
 
@@ -115,8 +115,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return hashValue;
 	}
 
-	private ulong ComputeHashWithBitwiseMask<TMapper>(IEnumerable<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
+	internal ulong ComputeHashWithBitwiseMask<TMapper>(IEnumerable<T> source, TMapper mapper)
+	  where TMapper : struct, IValueMapper<T>
 	{
 		ulong hashValue = 0, primePower = 1;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
@@ -135,7 +135,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return hashValue & mask;
 	}
 
-	private ulong SelectComputeHashWithBitwiseMask<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
+	internal ulong SelectComputeHashWithBitwiseMask<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
 	where TMapper : struct, IValueMapper<T>
 	=> (Vector512.IsHardwareAccelerated, Avx512F.IsSupported) switch
 	{
@@ -144,21 +144,21 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		_ => ComputeHashWithBitwiseMask(source, mapper)
 	};
 
-	private ulong ComputeHashWithBitwiseMaskAVX512<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
-		=> typeof(TMapper) == typeof(NumberMapper<T>)
-			? ComputeHashWithBitwiseMaskAVX512_NumberMapper(source)
-			: ComputeHashWithBitwiseMaskAVX512_Generic(source, mapper);
+	internal ulong ComputeHashWithBitwiseMaskAVX512<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
+	  where TMapper : struct, IValueMapper<T>
+	  => typeof(TMapper) == typeof(NumberMapper<T>)
+		? ComputeHashWithBitwiseMaskAVX512_NumberMapper(source)
+		: ComputeHashWithBitwiseMaskAVX512_Generic(source, mapper);
 
-	private ulong ComputeHashWithBitwiseMaskAVX512_NumberMapper(ReadOnlySpan<T> source)
-		=> typeof(T) switch
-		{
-			_ when typeof(T) == typeof(long) || typeof(T) == typeof(ulong) => ComputeHashWithBitwiseMaskAVX512_Int64(source),
-			_ when typeof(T) == typeof(int) || typeof(T) == typeof(uint) => ComputeHashWithBitwiseMaskAVX512_Int32(source),
-			_ => ComputeHashWithBitwiseMaskAVX512_Generic(source, new NumberMapper<T>())
-		};
+	internal ulong ComputeHashWithBitwiseMaskAVX512_NumberMapper(ReadOnlySpan<T> source)
+	  => typeof(T) switch
+	  {
+		  _ when typeof(T) == typeof(long) || typeof(T) == typeof(ulong) => ComputeHashWithBitwiseMaskAVX512_Int64(source),
+		  _ when typeof(T) == typeof(int) || typeof(T) == typeof(uint) => ComputeHashWithBitwiseMaskAVX512_Int32(source),
+		  _ => ComputeHashWithBitwiseMaskAVX512_Generic(source, new NumberMapper<T>())
+	  };
 
-	private ulong ComputeHashWithBitwiseMaskAVX512_Int64(ReadOnlySpan<T> source)
+	internal ulong ComputeHashWithBitwiseMaskAVX512_Int64(ReadOnlySpan<T> source)
 	{
 		int length = source.Length;
 		int remainder = length % 8;
@@ -183,7 +183,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return FinalizeAVX512Hash(accVec, powersVec, source, loopLimit, remainder, new NumberMapper<T>(), mask);
 	}
 
-	private ulong ComputeHashWithBitwiseMaskAVX512_Int32(ReadOnlySpan<T> source)
+	internal ulong ComputeHashWithBitwiseMaskAVX512_Int32(ReadOnlySpan<T> source)
 	{
 		int length = source.Length;
 		int remainder = length % 8;
@@ -199,8 +199,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		{
 			var intVec = Vector256.LoadUnsafe(ref Unsafe.As<T, uint>(ref Unsafe.Add(ref sourceRef, i)));
 			var dataVec = Vector512.Create(
-				Vector256.WidenLower(intVec).AsUInt64(),
-				Vector256.WidenUpper(intVec).AsUInt64());
+			  Vector256.WidenLower(intVec).AsUInt64(),
+			  Vector256.WidenUpper(intVec).AsUInt64());
 
 			unchecked
 			{
@@ -212,8 +212,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return FinalizeAVX512Hash(accVec, powersVec, source, loopLimit, remainder, new NumberMapper<T>(), mask);
 	}
 
-	private ulong ComputeHashWithBitwiseMaskAVX512_Generic<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
+	internal ulong ComputeHashWithBitwiseMaskAVX512_Generic<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
+	  where TMapper : struct, IValueMapper<T>
 	{
 		int length = source.Length;
 		int remainder = length % 8;
@@ -228,14 +228,14 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		for (int i = 0; i < loopLimit; i += 8)
 		{
 			var dataVec = Vector512.Create(
-				mapper.Map(Unsafe.Add(ref sourceRef, i)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 1)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 2)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 3)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 4)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 5)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 6)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 7)));
+			  mapper.Map(Unsafe.Add(ref sourceRef, i)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 1)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 2)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 3)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 4)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 5)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 6)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 7)));
 
 			unchecked
 			{
@@ -262,7 +262,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 	}
 
 	private ulong FinalizeAVX512Hash<TMapper>(Vector512<ulong> accVec, Vector512<ulong> powersVec, ReadOnlySpan<T> source, int loopLimit, int remainder, TMapper mapper, ulong mask)
-		where TMapper : struct, IValueMapper<T>
+	  where TMapper : struct, IValueMapper<T>
 	{
 		if (remainder == 0)
 		{
@@ -283,21 +283,21 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return Vector512.Sum(accVec) & mask;
 	}
 
-	private ulong ComputeHashWithBitwiseMaskAVX2<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
-		=> typeof(TMapper) == typeof(NumberMapper<T>)
-			? ComputeHashWithBitwiseMaskAVX2_NumberMapper(source)
-			: ComputeHashWithBitwiseMaskAVX2_Generic(source, mapper);
+	internal ulong ComputeHashWithBitwiseMaskAVX2<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
+	  where TMapper : struct, IValueMapper<T>
+	  => typeof(TMapper) == typeof(NumberMapper<T>)
+		? ComputeHashWithBitwiseMaskAVX2_NumberMapper(source)
+		: ComputeHashWithBitwiseMaskAVX2_Generic(source, mapper);
 
-	private ulong ComputeHashWithBitwiseMaskAVX2_NumberMapper(ReadOnlySpan<T> source)
-		=> typeof(T) switch
-		{
-			_ when typeof(T) == typeof(long) || typeof(T) == typeof(ulong) => ComputeHashWithBitwiseMaskAVX2_Int64(source),
-			_ when typeof(T) == typeof(int) || typeof(T) == typeof(uint) => ComputeHashWithBitwiseMaskAVX2_Int32(source),
-			_ => ComputeHashWithBitwiseMaskAVX2_Generic(source, new NumberMapper<T>())
-		};
+	internal ulong ComputeHashWithBitwiseMaskAVX2_NumberMapper(ReadOnlySpan<T> source)
+	  => typeof(T) switch
+	  {
+		  _ when typeof(T) == typeof(long) || typeof(T) == typeof(ulong) => ComputeHashWithBitwiseMaskAVX2_Int64(source),
+		  _ when typeof(T) == typeof(int) || typeof(T) == typeof(uint) => ComputeHashWithBitwiseMaskAVX2_Int32(source),
+		  _ => ComputeHashWithBitwiseMaskAVX2_Generic(source, new NumberMapper<T>())
+	  };
 
-	private ulong ComputeHashWithBitwiseMaskAVX2_Int64(ReadOnlySpan<T> source)
+	internal ulong ComputeHashWithBitwiseMaskAVX2_Int64(ReadOnlySpan<T> source)
 	{
 		int length = source.Length;
 		int remainder = length % 4;
@@ -322,7 +322,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return FinalizeAVX2Hash(accVec, powersVec, source, loopLimit, remainder, new NumberMapper<T>(), mask);
 	}
 
-	private ulong ComputeHashWithBitwiseMaskAVX2_Int32(ReadOnlySpan<T> source)
+	internal ulong ComputeHashWithBitwiseMaskAVX2_Int32(ReadOnlySpan<T> source)
 	{
 		int length = source.Length;
 		int remainder = length % 4;
@@ -338,8 +338,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		{
 			var intVec = Vector128.LoadUnsafe(ref Unsafe.As<T, uint>(ref Unsafe.Add(ref sourceRef, i)));
 			var dataVec = Vector256.Create(
-				Vector128.WidenLower(intVec).AsUInt64(),
-				Vector128.WidenUpper(intVec).AsUInt64());
+			  Vector128.WidenLower(intVec).AsUInt64(),
+			  Vector128.WidenUpper(intVec).AsUInt64());
 
 			unchecked
 			{
@@ -351,8 +351,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		return FinalizeAVX2Hash(accVec, powersVec, source, loopLimit, remainder, new NumberMapper<T>(), mask);
 	}
 
-	private ulong ComputeHashWithBitwiseMaskAVX2_Generic<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
+	internal ulong ComputeHashWithBitwiseMaskAVX2_Generic<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
+	  where TMapper : struct, IValueMapper<T>
 	{
 		int length = source.Length;
 		int remainder = length % 4;
@@ -367,10 +367,10 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 		for (int i = 0; i < loopLimit; i += 4)
 		{
 			var dataVec = Vector256.Create(
-				mapper.Map(Unsafe.Add(ref sourceRef, i)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 1)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 2)),
-				mapper.Map(Unsafe.Add(ref sourceRef, i + 3)));
+			  mapper.Map(Unsafe.Add(ref sourceRef, i)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 1)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 2)),
+			  mapper.Map(Unsafe.Add(ref sourceRef, i + 3)));
 
 			unchecked
 			{
@@ -402,7 +402,7 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 	}
 
 	private ulong FinalizeAVX2Hash<TMapper>(Vector256<ulong> accVec, Vector256<ulong> powersVec, ReadOnlySpan<T> source, int loopLimit, int remainder, TMapper mapper, ulong mask)
-		where TMapper : struct, IValueMapper<T>
+	  where TMapper : struct, IValueMapper<T>
 	{
 		ulong hashValue = Vector256.Sum(accVec);
 		ulong primePower = powersVec.GetElement(0);
@@ -422,8 +422,8 @@ public sealed class PolynomialHasher<T> : IEqualityComparer<IEnumerable<T>>
 
 		return hashValue & mask;
 	}
-	private ulong ComputeHashWithBitwiseMask<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
-		where TMapper : struct, IValueMapper<T>
+	internal ulong ComputeHashWithBitwiseMask<TMapper>(ReadOnlySpan<T> source, TMapper mapper)
+	  where TMapper : struct, IValueMapper<T>
 	{
 		ulong hashValue = 0, primePower = 1;
 		ulong mask = _mod == 0 ? ulong.MaxValue : _mod - 1;
